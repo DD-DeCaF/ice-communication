@@ -8,10 +8,11 @@ from ice.utils import get_feature_seq
 
 
 class IceUploader(object):
-    def __init__(self):
+    def __init__(self, setting=None):
         super(IceUploader, self).__init__()
 
-        setting = IceSettings()
+        if not setting:
+            setting = IceSettings()
         self.comm = IceCommunication(setting)
 
     def upload_part(self, part):
