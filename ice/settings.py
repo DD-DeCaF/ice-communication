@@ -1,7 +1,7 @@
 
 default_settings = {
-    "USER_NAME": "",
-    "PASSWORD": "",
+    "USER_NAME": "Administrator",
+    "PASSWORD": "Administrator",
     "API_USER": None,
     "API_KEY": None,
     "HOST":  None,

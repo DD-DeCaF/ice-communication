@@ -1,11 +1,10 @@
 import json
 import os
 
-from comm import IceCommunication
-from iceelements import Feature, PlasmidContainer, get_id_from_ice_data
-from utils import get_feature_seq
-
-from settings import IceSettings
+from ice.comm import IceCommunication
+from ice.iceelements import Feature, PlasmidContainer, get_id_from_ice_data
+from ice.settings import IceSettings
+from ice.utils import get_feature_seq
 
 
 class IceUploader(object):

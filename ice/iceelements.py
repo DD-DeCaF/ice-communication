@@ -1,7 +1,7 @@
 import json
 
-from utils import get_biopython_object
-from utils import get_object_id_from_file_path
+from ice.utils import get_biopython_object
+from ice.utils import get_object_id_from_file_path
 
 
 class Part(object):
