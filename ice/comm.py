@@ -35,8 +35,8 @@ class IceCommunication(object):
 
     def get_request_url(self, rest_url=None):
         if rest_url:
-            return "https://%s:%d/%s" % (self.settings.host, self.settings.port, rest_url)
-        return "https://%s:%d" % (self.settings.host, self.settings.port)
+            return "https://{}:{}/{}".format(self.settings.host, self.settings.port, rest_url)
+        return "https://{}:{}".format(self.settings.host, self.settings.port)
 
     def get_request_header_default(self):
 
@@ -68,7 +68,7 @@ class IceCommunication(object):
             return response.text
 
     def get_ice_part(self, ice_id):
-        rest_url = "rest/parts/%s" % str(ice_id)
+        rest_url = "rest/parts/{}".format(ice_id)
         return self.ice_get_request(rest_url)
 
     def ice_post_request(self, rest_url, data, json_content=True, headers=None):
