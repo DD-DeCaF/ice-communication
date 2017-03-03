@@ -125,7 +125,7 @@ class IceCommunication(object):
         else:
             raise HTTPError(url, 500, 'Could not download file')
 
-        get_url = 'rest/file/tmp/%s' % file_name
+        get_url = 'rest/file/tmp/{}'.format(file_name)
 
         request_url = self.get_request_url(get_url)
 
