@@ -1,5 +1,7 @@
 import json
-from urllib.error import URLError, HTTPError
+import os
+from urllib.error import HTTPError
+import shutil
 
 import requests
 
@@ -62,7 +64,8 @@ class IceCommunication(object):
         response = requests.get(request_url,
                                 params=params,
                                 verify=False,
-                                headers=self.get_request_header_default()
+                                headers=self.get_request_header_default(),
+                                stream=stream
                                 )
         if check_response(response):
             return response.text
@@ -107,4 +110,38 @@ class IceCommunication(object):
         ice_responds = json.loads(self.ice_post_request('rest/accesstokens', data, headers=headers))
         if 'sessionId' in ice_responds:
             return ice_responds['sessionId']
+
+    def download_genbank(self, ids, file_path='./'):
+        url = 'rest/file/csv?sequenceFormats=genbank'
+        data = {'all': False,
+                'destination': [],
+                'selectionType': 'COLLECTION',
+                'entries': ids}
+
+        temp = json.loads(self.ice_post_request(url, data))
+
+        if 'value' in temp:
+            file_name = temp['value']
+        else:
+            raise HTTPError(url, 500, 'Could not download file')
+
+        get_url = 'rest/file/tmp/%s' % file_name
+
+        request_url = self.get_request_url(get_url)
+
+        response = requests.get(request_url,
+                                verify=False,
+                                headers=self.get_request_header_default(),
+                                stream=True
+                                )
+
+        check_response(response)
+
+        full_file_path = os.path.join(file_path, file_name)
+
+        with open(full_file_path, 'wb') as fd:
+            response.raw.decode_content = True
+            shutil.copyfileobj(response.raw, fd)
+
+        return True
 
