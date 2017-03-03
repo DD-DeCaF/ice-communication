@@ -8,7 +8,8 @@ import requests
 
 def check_response(response):
     if response.status_code != 200:
-        raise HTTPError(response.url, response.status_code, msg=response.text, hdrs=response.headers, fp="")
+        raise HTTPError(response.url, response.status_code,
+                        msg=response.text, hdrs=response.headers, fp="")
     return True
 
 
@@ -60,6 +61,7 @@ class IceCommunication(object):
 
     def ice_get_request(self, rest_url, params=None):
         request_url = self.get_request_url(rest_url)
+        headers = self.get_request_header_default()
 
         response = requests.get(request_url,
                                 params=params,
@@ -74,8 +76,18 @@ class IceCommunication(object):
         rest_url = "rest/parts/{}".format(ice_id)
         return self.ice_get_request(rest_url)
 
-    def ice_post_request(self, rest_url, data, json_content=True, headers=None):
+    def search_ice_part(self, query, offset=0, limit=15, sort='relevance', asc='false'):
+        rest_url = "rest/search?"
+        search_string = "q={}&offset={}&limit={}&sort={}&asc={}".format(
+            query, offset, limit, sort, asc)
+        return self.ice_get_request(rest_url + search_string)
 
+    def get_ice_part_sequence(self, ice_id):
+        rest_url = "rest/parts/{}/sequence".format(ice_id)
+        return self.ice_get_request(rest_url)
+
+    def ice_post_request(self, rest_url, data, json_content=True, headers=None):
+        print(headers)
         if not headers:
             headers = self.get_request_header_default()
         if json_content:
@@ -85,7 +97,7 @@ class IceCommunication(object):
                                  data=str(data),
                                  verify=False,
                                  headers=headers
-                               )
+                                 )
         check_response(response)
         return response.text
 
@@ -107,7 +119,8 @@ class IceCommunication(object):
             'password': self.settings.password
         }
 
-        ice_responds = json.loads(self.ice_post_request('rest/accesstokens', data, headers=headers))
+        ice_responds = json.loads(self.ice_post_request(
+            'rest/accesstokens', data, headers=headers))
         if 'sessionId' in ice_responds:
             return ice_responds['sessionId']
 
@@ -144,4 +157,3 @@ class IceCommunication(object):
             shutil.copyfileobj(response.raw, fd)
 
         return True
-
