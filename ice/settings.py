@@ -1,11 +1,10 @@
-
 default_settings = {
-    "USER_NAME": None,
-    "PASSWORD": None,
-    "API_USER": "UCloning",
-    "API_KEY": "3mEya8B8VjYKsLWuoQoNhaAjLmgxYGITECvpEG/CYdg=",
-    "HOST":  'ice-1.ice.ba5123dc.cont.dockerapp.io',
-    "PORT": '32832'
+    "USER_NAME": "Administrator",
+    "PASSWORD": "Administrator",
+    "API_USER": None,
+    "API_KEY": None,
+    "HOST":  None,
+    "PORT": None
 }
 
 
