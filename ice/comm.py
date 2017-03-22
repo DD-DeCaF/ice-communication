@@ -196,7 +196,10 @@ class IceCommunication(object):
         # Since the file is a binary zip file, some hoops needs to be jumped
         tmp = tempfile.TemporaryFile()
         tmp.write(response.raw.data)
+        tmp.seek(0)
         z = zipfile.ZipFile(tmp)
         # The entry file is not needed, when there is only a single file
-        file_name = z.namelist.remove('entries.csv')[0]
+        flist = z.namelist()
+        flist.remove('entries.csv')
+        file_name = flist[0]
         return z.open(file_name)
