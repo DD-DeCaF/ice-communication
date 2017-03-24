@@ -1,4 +1,3 @@
-
 default_settings = {
     "USER_NAME": "Administrator",
     "PASSWORD": "Administrator",
@@ -41,5 +40,3 @@ class IceSettings(object):
 
         if "PORT" in settings and settings["PORT"]:
             self.port = int(settings["PORT"])
-
-

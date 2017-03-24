@@ -2,13 +2,15 @@ import json
 import os
 from urllib.error import HTTPError
 import shutil
-
+import tempfile
+import zipfile
 import requests
 
 
 def check_response(response):
     if response.status_code != 200:
-        raise HTTPError(response.url, response.status_code, msg=response.text, hdrs=response.headers, fp="")
+        raise HTTPError(response.url, response.status_code,
+                        msg=response.text, hdrs=response.headers, fp="")
     return True
 
 
@@ -60,22 +62,42 @@ class IceCommunication(object):
 
     def ice_get_request(self, rest_url, params=None):
         request_url = self.get_request_url(rest_url)
+        headers = self.get_request_header_default()
 
         response = requests.get(request_url,
                                 params=params,
                                 verify=False,
-                                headers=self.get_request_header_default(),
-                                stream=stream
+                                headers=self.get_request_header_default()
                                 )
         if check_response(response):
             return response.text
 
     def get_ice_part(self, ice_id):
+        '''This class is for backwards compatibility'''
+        return self.get_ice_part_detail(ice_id)
+
+    def get_ice_part_detail(self, ice_id):
         rest_url = "rest/parts/{}".format(ice_id)
         return self.ice_get_request(rest_url)
 
-    def ice_post_request(self, rest_url, data, json_content=True, headers=None):
+    def get_ice_part_list(self):
+        '''There doesn't seem to be a list view in ICE, 
+        so this is a hack to get it done. Pagination is missing though'''
+        rest_url = "rest/parts/"
+        return self.search_ice_part('')
 
+    def search_ice_part(self, query, offset=0, limit=15, sort='relevance', asc='false'):
+        rest_url = "rest/search?"
+        search_string = "q={}&offset={}&limit={}&sort={}&asc={}".format(
+            query, offset, limit, sort, asc)
+        return self.ice_get_request(rest_url + search_string)
+
+    def get_ice_part_sequence(self, ice_id):
+        rest_url = "rest/parts/{}/sequence".format(ice_id)
+        return self.ice_get_request(rest_url)
+
+    def ice_post_request(self, rest_url, data, json_content=True, headers=None):
+        print(headers)
         if not headers:
             headers = self.get_request_header_default()
         if json_content:
@@ -85,7 +107,7 @@ class IceCommunication(object):
                                  data=str(data),
                                  verify=False,
                                  headers=headers
-                               )
+                                 )
         check_response(response)
         return response.text
 
@@ -107,7 +129,8 @@ class IceCommunication(object):
             'password': self.settings.password
         }
 
-        ice_responds = json.loads(self.ice_post_request('rest/accesstokens', data, headers=headers))
+        ice_responds = json.loads(self.ice_post_request(
+            'rest/accesstokens', data, headers=headers))
         if 'sessionId' in ice_responds:
             return ice_responds['sessionId']
 
@@ -132,8 +155,7 @@ class IceCommunication(object):
         response = requests.get(request_url,
                                 verify=False,
                                 headers=self.get_request_header_default(),
-                                stream=True
-                                )
+                                stream=True)
 
         check_response(response)
 
@@ -145,3 +167,39 @@ class IceCommunication(object):
 
         return True
 
+    def get_genbank_record(self, part_id):
+        '''Because of a bug in ICE, the genbank file can't be turned 
+        into a biopython object. Returns a genbank file object from 
+        the part_id'''
+        url = 'rest/file/csv?sequenceFormats=genbank'
+        data = {'all': False,
+                'destination': [],
+                'selectionType': 'COLLECTION',
+                'entries': [part_id]}
+
+        temp = json.loads(self.ice_post_request(url, data))
+
+        if 'value' in temp:
+            file_name = temp['value']
+        else:
+            raise HTTPError(url, 500, 'Could not download file')
+
+        get_url = 'rest/file/tmp/{}'.format(file_name)
+
+        request_url = self.get_request_url(get_url)
+
+        response = requests.get(request_url,
+                                verify=False,
+                                headers=self.get_request_header_default(),
+                                stream=True)
+
+        # Since the file is a binary zip file, some hoops needs to be jumped
+        tmp = tempfile.TemporaryFile()
+        tmp.write(response.raw.data)
+        tmp.seek(0)
+        z = zipfile.ZipFile(tmp)
+        # The entry file is not needed, when there is only a single file
+        flist = z.namelist()
+        flist.remove('entries.csv')
+        file_name = flist[0]
+        return z.open(file_name)
